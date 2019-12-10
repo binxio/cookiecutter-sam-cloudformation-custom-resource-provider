@@ -13,6 +13,7 @@ Resources:
   CustomResourceProvider:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: {{ cookiecutter.project_name }}
       CodeUri: ./custom_provider/
       Handler: provider.handle
       Runtime: python3.7
