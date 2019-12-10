@@ -1,0 +1,11 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+   Custom:
+     Type: 'Custom::Custom'
+     Properties:
+       Value: 'Hello World!'
+       ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:{{cookiecutter.project_name}}'
+
+Outputs:
+  Value: !Getatt 'Custom.Value'
+

@@ -11,10 +11,12 @@ help:           ## Show this help.
 
 build: $(_TEMPLATE)	## content of the the lambda function code zip
 
-test:		## run the local unit tests
+test: Pipfile.lock		## run the local unit tests
+	pipenv run pytest
+
+Pipfile.lock: Pipfile */requirements.txt 
 	pipenv install -d
 	pipenv install -r */requirements.txt
-	pipenv run pytest
 
 deploy: packaged.yaml	## the custom provider to AWS
 	sam deploy \
@@ -40,7 +42,7 @@ bucket:		## create s3 bucket for sam artifacts $(SAM_S3_BUCKET)
 
 
 EVENT = events/create.json	# to send to the provider
-invoke-local: $(_TEMPLATE)		## custom provider
+invoke-local: $(_TEMPLATE)	## custom provider
 	sam local invoke -e $(EVENT)
 
 invoke-deployed: FUNCTION_ARN=$(shell aws cloudformation describe-stacks \
@@ -52,3 +54,8 @@ invoke-deployed:	## custom provider
 		--function-name $(FUNCTION_ARN) \
 		--payload '$(shell cat $(EVENT))' \
 		/dev/stdout
+
+deploy-demo: 		## stack using custom provider
+	aws cloudformation deploy \
+		--stack-name {{cookiecutter.project_name}}-demo \
+		--template-file cloudformation/demo-stack.yaml
