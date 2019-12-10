@@ -8,6 +8,16 @@ def test_create():
     response = custom_provider.handle(request, {})
     assert response["Status"] == "SUCCESS", response["Reason"]
 
+def test_update():
+    request = CustomResourceRequest("Update", {})
+    response = custom_provider.handle(request, {})
+    assert response["Status"] == "SUCCESS", response["Reason"]
+
+def test_delete():
+    request = CustomResourceRequest("Delete", {})
+    response = custom_provider.handle(request, {})
+    assert response["Status"] == "SUCCESS", response["Reason"]
+
 
 class CustomResourceRequest(dict):
     def __init__(
