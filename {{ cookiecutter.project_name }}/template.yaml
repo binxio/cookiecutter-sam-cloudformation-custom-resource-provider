@@ -1,0 +1,34 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: |
+  {{ cookiecutter.project_name }}
+
+  {{ cookiecutter.short_description }}
+
+Globals:
+  Function:
+    Timeout: 5
+
+Resources:
+  CustomResourceProvider:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./custom_provider/
+      Handler: provider.handle
+      Runtime: python3.7
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - sts:GetCallerIdentity
+              Resource:
+                - '*'
+      Environment:
+        Variables:
+          LOG_LEVEL: INFO
+
+Outputs:
+  ServiceToken:
+    Description: Custom Provider ARN
+    Value: !GetAtt 'CustomResourceProvider.Arn'

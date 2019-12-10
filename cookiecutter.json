@@ -1,0 +1,4 @@
+{
+    "project_name": "cfn-custom-provider",
+    "short_description": "CloudFormation Custom Provider"
+}
