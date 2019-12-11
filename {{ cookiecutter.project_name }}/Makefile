@@ -1,7 +1,7 @@
 .PHONY: help install test bucket build package deploy invoke-local invoke-deployed
 
-SAM_S3_BUCKET = sam-$(shell aws sts get-caller-identity --query Account --output text)-$(shell aws configure get region)
-SAM_S3_PREFIX = {{cookiecutter.project_name}}
+PROJECT_NAME = {{cookiecutter.project_name}}
+SAM_PROJECT_BUCKET = sam-$(shell aws sts get-caller-identity --query Account --output text)-$(shell aws configure get region)
 
 _TEMPLATE = .aws-sam/build/template.yaml
 
@@ -22,7 +22,7 @@ deploy: packaged.yaml	## the custom provider to AWS
 	sam deploy \
 		--template-file packaged.yaml \
 		--capabilities CAPABILITY_IAM \
-		--stack-name {{cookiecutter.project_name}}
+		--stack-name $(PROJECT_NAME)
 
 $(_TEMPLATE): template.yaml custom_provider/requirements.txt  custom_provider/*
 	sam build --use-container
@@ -31,13 +31,13 @@ $(_TEMPLATE): template.yaml custom_provider/requirements.txt  custom_provider/*
 
 packaged.yaml: $(_TEMPLATE)
 	sam package \
-		--s3-bucket $(SAM_S3_BUCKET) \
-		--s3-prefix $(SAM_S3_PREFIX) \
+		--s3-bucket $(SAM_PROJECT_BUCKET) \
+		--s3-prefix $(PROJECT_NAME) \
 		--output-template-file packaged.yaml
 
 
-bucket:		## create s3 bucket for sam artifacts $(SAM_S3_BUCKET)
-	@pipenv run aws s3 ls s3://$(SAM_S3_BUCKET) > /dev/null 2>&1 || pipenv run aws s3 mb s3://$(SAM_S3_BUCKET) ; echo $(SAM_S3_BUCKET) created
+bucket:		## create s3 bucket for sam artifacts $(SAM_PROJECT_BUCKET)
+	@pipenv run aws s3 ls s3://$(SAM_PROJECT_BUCKET) > /dev/null 2>&1 || pipenv run aws s3 mb s3://$(SAM_PROJECT_BUCKET) ; echo $(SAM_PROJECT_BUCKET) created
 
 
 
@@ -46,7 +46,7 @@ invoke-local: $(_TEMPLATE)	## custom provider
 	sam local invoke -e $(EVENT)
 
 invoke-deployed: FUNCTION_ARN=$(shell aws cloudformation describe-stacks \
-				  --stack-name {{cookiecutter.project_name}} \
+				  --stack-name $(PROJECT_NAME) \
 				  --query 'Stacks[0].Outputs[?OutputKey==`ServiceToken`].OutputValue' \
 				  --output text)
 invoke-deployed:	## custom provider
@@ -57,5 +57,5 @@ invoke-deployed:	## custom provider
 
 deploy-demo: 		## stack using custom provider
 	aws cloudformation deploy \
-		--stack-name {{cookiecutter.project_name}}-demo \
+		--stack-name $(PROJECT-NAME)-demo \
 		--template-file cloudformation/demo-stack.yaml
