@@ -55,7 +55,16 @@ invoke-deployed:	## custom provider
 		--payload '$(shell cat $(EVENT))' \
 		/dev/stdout
 
+show-logs:		## of the custom provider
+	sam logs --name $(PROJECT_NAME)
+
 deploy-demo: 		## stack using custom provider
 	aws cloudformation deploy \
-		--stack-name $(PROJECT-NAME)-demo \
+		--stack-name $(PROJECT_NAME)-demo \
 		--template-file cloudformation/demo-stack.yaml
+
+delete-demo: 		## stack using custom provider
+	aws cloudformation delete-stack \
+		--stack-name $(PROJECT_NAME)-demo
+	aws cloudformation wait stack-delete-complete \
+		--stack-name $(PROJECT_NAME)-demo
