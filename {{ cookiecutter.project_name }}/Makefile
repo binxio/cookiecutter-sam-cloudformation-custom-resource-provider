@@ -14,7 +14,7 @@ build: $(_TEMPLATE)	## the lambda deployment zip in .aws-sam/
 test: Pipfile.lock		## runs the unit tests in ./tests
 	pipenv run pytest
 
-deploy: packaged.yaml	## uploads the lambda deployment zip file and deploys ./template.yml to aws
+deploy: packaged.yaml	## uploads the lambda deployment zip file and deploys ./template.yaml to aws
 	sam deploy \
 		--template-file packaged.yaml \
 		--capabilities CAPABILITY_IAM \

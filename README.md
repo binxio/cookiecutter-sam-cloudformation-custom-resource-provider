@@ -27,7 +27,7 @@ The Makefile eases your development cycle:
 |help            | shows description of all available make targets				|
 |build           | the lambda deployment zip in .aws-sam/					|
 |test            | runs the unit tests in ./tests						|
-|deploy          | uploads the lambda deployment zip file and deploys ./template.yml to aws	|
+|deploy          | uploads the lambda deployment zip file and deploys ./template.yaml to aws	|
 |bucket          | creates s3 bucket for uploading the lambda zip 				|
 |invoke-local    | runs integration test of events in ./events					|
 |invoke-deployed | runs system test of events in ./events					|
