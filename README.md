@@ -22,7 +22,8 @@ for more details.
 ## development
 The Makefile eases your development cycle:
 
-+----------------+------------------------------------------------------------------------------+
+| target         | description                                                                  |
+|----------------|------------------------------------------------------------------------------|
 |help            | shows description of all available make targets				|
 |build           | the lambda deployment zip in .aws-sam/					|
 |test            | runs the unit tests in ./tests						|
@@ -33,4 +34,3 @@ The Makefile eases your development cycle:
 |show-logs       | shows logs of the deployed custom provider					|
 |deploy-demo     | deploys ./cloudformation/demo-stack.yaml to AWS				|
 |delete-demo     | deletes ./cloudformation/demo-stack.yaml from AWS				|
-+----------------+------------------------------------------------------------------------------+
