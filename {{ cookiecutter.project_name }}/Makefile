@@ -6,28 +6,19 @@ SAM_PROJECT_BUCKET = sam-$(shell aws sts get-caller-identity --query Account --o
 _TEMPLATE = .aws-sam/build/template.yaml
 
 
-help:           ## Show this help.
+help:           ## shows description of all available make targets
 	@fgrep -h "##" $(MAKEFILE_LIST) | sed -e 's/\([^:]*\):[^#]*\(##.*\)/\1			\2/' | grep -v fgrep
 
-build: $(_TEMPLATE)	## content of the the lambda function code zip
+build: $(_TEMPLATE)	## the lambda deployment zip in .aws-sam/
 
-test: Pipfile.lock		## run the local unit tests
+test: Pipfile.lock		## runs the unit tests in ./tests
 	pipenv run pytest
 
-Pipfile.lock: Pipfile */requirements.txt 
-	pipenv install -d
-	pipenv install -r */requirements.txt
-
-deploy: packaged.yaml	## the custom provider to AWS
+deploy: packaged.yaml	## uploads the lambda deployment zip file and deploys ./template.yml to aws
 	sam deploy \
 		--template-file packaged.yaml \
 		--capabilities CAPABILITY_IAM \
 		--stack-name $(PROJECT_NAME)
-
-$(_TEMPLATE): template.yaml custom_provider/requirements.txt  custom_provider/*
-	sam build --use-container
-	find .aws-sam -type d -print0 | xargs -0 chmod go+rx
-	find .aws-sam -type f -print0 | xargs -0 chmod go+r
 
 packaged.yaml: $(_TEMPLATE)
 	sam package \
@@ -36,35 +27,53 @@ packaged.yaml: $(_TEMPLATE)
 		--output-template-file packaged.yaml
 
 
-bucket:		## create s3 bucket for sam artifacts $(SAM_PROJECT_BUCKET)
+bucket:		## creates s3 bucket for uploading the lambda zip 
 	@pipenv run aws s3 ls s3://$(SAM_PROJECT_BUCKET) > /dev/null 2>&1 || pipenv run aws s3 mb s3://$(SAM_PROJECT_BUCKET) ; echo $(SAM_PROJECT_BUCKET) created
 
 
-
-EVENT = events/create.json	# to send to the provider
-invoke-local: $(_TEMPLATE)	## custom provider
-	sam local invoke -e $(EVENT)
+invoke-local: $(_TEMPLATE)	## runs integration test of events in ./events
+	sam local invoke -e ./events/create.json
+	sam local invoke -e ./events/update.json
+	sam local invoke -e ./events/delete.json
 
 invoke-deployed: FUNCTION_ARN=$(shell aws cloudformation describe-stacks \
 				  --stack-name $(PROJECT_NAME) \
 				  --query 'Stacks[0].Outputs[?OutputKey==`ServiceToken`].OutputValue' \
 				  --output text)
-invoke-deployed:	## custom provider
+invoke-deployed:	## runs system test of events in ./events
 	aws lambda invoke \
 		--function-name $(FUNCTION_ARN) \
-		--payload '$(shell cat $(EVENT))' \
+		--payload '$(shell cat ./events/create.json)' \
+		/dev/stdout
+	aws lambda invoke \
+		--function-name $(FUNCTION_ARN) \
+		--payload '$(shell cat ./events/update.json)' \
+		/dev/stdout
+	aws lambda invoke \
+		--function-name $(FUNCTION_ARN) \
+		--payload '$(shell cat ./events/delete.json)' \
 		/dev/stdout
 
-show-logs:		## of the custom provider
+show-logs:		## shows logs of the deployed custom provider
 	sam logs --name $(PROJECT_NAME)
 
-deploy-demo: 		## stack using custom provider
+deploy-demo: 		## deploys ./cloudformation/demo-stack.yaml to AWS
 	aws cloudformation deploy \
 		--stack-name $(PROJECT_NAME)-demo \
 		--template-file cloudformation/demo-stack.yaml
 
-delete-demo: 		## stack using custom provider
+delete-demo: 		## deletes ./cloudformation/demo-stack.yaml from AWS
 	aws cloudformation delete-stack \
 		--stack-name $(PROJECT_NAME)-demo
 	aws cloudformation wait stack-delete-complete \
 		--stack-name $(PROJECT_NAME)-demo
+
+$(_TEMPLATE): template.yaml custom_provider/requirements.txt  custom_provider/*
+	sam build --use-container
+	find .aws-sam -type d -print0 | xargs -0 chmod go+rx
+	find .aws-sam -type f -print0 | xargs -0 chmod go+r
+
+Pipfile.lock: Pipfile */requirements.txt 
+	pipenv install -d
+	pipenv install -r */requirements.txt
+
